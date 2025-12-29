@@ -40,22 +40,31 @@ const markersData = [
   { name: "Sorong", lat: -0.8667, lng: 131.2500 }
 ];
 
-// Inisialisasi peta setelah DOM dimuat
-document.addEventListener('DOMContentLoaded', function() {
-  // Inisialisasi peta dengan center di Indonesia
-  const map = L.map('map').setView([-2.5, 118], 5);
+// Inisialisasi peta
+document.addEventListener('DOMContentLoaded', function () {
 
-  // Tambahkan tile layer (OpenStreetMap)
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
+  const indonesiaBounds = [
+    [-11.5, 94.5],
+    [6.5, 141.5]
+  ];
+
+  const map = L.map('map', {
+    maxBounds: indonesiaBounds,
+    maxBoundsViscosity: 1.0,
+    minZoom: 4,
     maxZoom: 19
+  }).setView([-2.5, 118], 5);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // Tambahkan marker untuk setiap provinsi
+  map.fitBounds(indonesiaBounds);
+
   markersData.forEach(data => {
-    const marker = L.marker([data.lat, data.lng]).addTo(map);
-    marker.bindPopup(`<b>${data.name}</b>`);
+    L.marker([data.lat, data.lng])
+      .addTo(map)
+      .bindPopup(`<b>${data.name}</b>`);
   });
 
-  console.log('Peta dengan marker berhasil dimuat!');
 });
