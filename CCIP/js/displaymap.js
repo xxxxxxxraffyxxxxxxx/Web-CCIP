@@ -1,4 +1,4 @@
-// Data marker untuk ibukota provinsi Indonesia
+//Data Lokasi
 const markersData = [
   { name: "Banda Aceh", lat: 5.5483, lng: 95.3238 },
   { name: "Medan", lat: 3.5952, lng: 98.6722 },
@@ -43,28 +43,123 @@ const markersData = [
 // Inisialisasi peta
 document.addEventListener('DOMContentLoaded', function () {
 
-  const indonesiaBounds = [
-    [-11.5, 94.5],
-    [6.5, 141.5]
-  ];
-
+  //peta batas Indonesia
+  const indonesiaBounds = [[-11.5, 94.5],[6.5, 141.5]];
   const map = L.map('map', {
     maxBounds: indonesiaBounds,
     maxBoundsViscosity: 1.0,
-    minZoom: 4,
+    minZoom: 5,
     maxZoom: 19
   }).setView([-2.5, 118], 5);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
-
-  map.fitBounds(indonesiaBounds);
+ 
+  //bagian marker di add ke page pengalaman kajian iklim
+  const kajianLayer = L.layerGroup();
 
   markersData.forEach(data => {
-    L.marker([data.lat, data.lng])
-      .addTo(map)
-      .bindPopup(`<b>${data.name}</b>`);
+   const marker = L.marker([data.lat, data.lng])           
+     .bindPopup(`<b>${data.name}</b>`);
+    kajianLayer.addLayer(marker);
   });
 
+  const navKajian = document.querySelector('.nav-kajian');
+
+  if (navKajian) {
+    navKajian.addEventListener('click', function(e) {
+      e.preventDefault(); // Mencegah halaman scroll ke atas
+
+      // Cek apakah layer sudah ada di peta?
+      if (map.hasLayer(kajianLayer)) {
+        map.removeLayer(kajianLayer); // Jika sudah ada, hapus (sembunyikan)
+      } else {
+        map.addLayer(kajianLayer);    // Jika belum ada, tampilkan
+      }
+    });
+  }
 });
+
+//page hujan bulanan
+document.addEventListener('DOMContentLoaded', function () {
+  const panelHujan = document.getElementById('panel-hujan');
+  const navHujanBulanan = document.querySelector('.hujan-bulanan');
+  const semuaTombolLain = document.querySelectorAll('.nav-link button, .dropdown-item');
+
+  if (navHujanBulanan) {
+    navHujanBulanan.addEventListener('click', function(e) {
+      e.preventDefault(); // Mencegah halaman scroll ke atas
+      // Tampilkan atau sembunyikan panel hujan
+      panelHujan.style.display = 'block';
+    });
+  }
+
+  semuaTombolLain.forEach(tombol => {
+    tombol.addEventListener('click', function () {
+      if (this !== navHujanBulanan) {
+        panelHujan.style.display = 'none';
+      } 
+    });
+  });  
+});
+
+//page periode ulang
+document.addEventListener('DOMContentLoaded', function () {
+  const chEkstrem = document.getElementById('ch-ekstrem');
+  const navCHEkstrem = document.querySelector('.hujan-ekstrem');
+  const semuaTombolLain = document.querySelectorAll('.nav-link button, .dropdown-item');
+
+  if (navCHEkstrem) {
+    navCHEkstrem.addEventListener('click', function(e) {
+      e.preventDefault(); // Mencegah halaman scroll ke atas
+      // Tampilkan atau sembunyikan panel hujan
+      chEkstrem.style.display = 'block';
+    });
+  }
+
+  semuaTombolLain.forEach(tombol => {
+    tombol.addEventListener('click', function () {
+      if (this !== navCHEkstrem) {
+        chEkstrem.style.display = 'none';
+      } 
+    });
+  });  
+});
+
+//page temperatur
+document.addEventListener('DOMContentLoaded', function () {
+  const temp = document.getElementById('panel-temp');
+  const navTemp = document.querySelector('.temperatur');
+  const semuaTombolLain = document.querySelectorAll('.nav-link button, .dropdown-item');
+
+  if (navTemp) {
+    navTemp.addEventListener('click', function(e) {
+      e.preventDefault(); // Mencegah halaman scroll ke atas
+      // Tampilkan atau sembunyikan panel hujan
+      temp.style.display = 'block';
+    });
+  }
+
+  semuaTombolLain.forEach(tombol => {
+    tombol.addEventListener('click', function () {
+      if (this !== navTemp) {
+        temp.style.display = 'none';
+      } 
+    });
+  });  
+});
+
+//tombol aktif nonakttif
+document.addEventListener('DOMContentLoaded', function () {
+  const semuaTombol = document.querySelectorAll('.nav-link button, .dropdown-item');
+  semuaTombol.forEach(tombol => {
+    tombol.addEventListener('click', function () {
+      semuaTombol.forEach(btn => btn.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+});
+
+
+  
