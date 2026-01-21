@@ -44,7 +44,11 @@ const markersData = [
 document.addEventListener('DOMContentLoaded', function () {
 
   //peta batas Indonesia
-  const indonesiaBounds = [[-11.5, 94.5],[6.5, 141.5]];
+  const indonesiaBounds = [
+    [-11.5, 94.5],
+    [6.5, 141.5]
+  ];
+
   const map = L.map('map', {
     maxBounds: indonesiaBounds,
     maxBoundsViscosity: 1.0,
@@ -55,15 +59,15 @@ document.addEventListener('DOMContentLoaded', function () {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
+
+  markersData.forEach(data => {
+    L.marker([data.lat, data.lng])
+      .addTo(map)
+      .bindPopup(`<b>${data.name}</b>`);
+  });
  
   //bagian marker di add ke page pengalaman kajian iklim
   const kajianLayer = L.layerGroup();
-
-  markersData.forEach(data => {
-   const marker = L.marker([data.lat, data.lng])           
-     .bindPopup(`<b>${data.name}</b>`);
-    kajianLayer.addLayer(marker);
-  });
 
   const navKajian = document.querySelector('.nav-kajian');
 
