@@ -19,7 +19,8 @@
 <body>
   <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-      <img src="img/itb.png" alt="Logo" width="30" height="24" class="d-inline-block align-text-top" margin-right="10px">
+      <img src="img/itb.png" alt="Logo" width="30" height="24" class="d-inline-block align-text-top"
+        margin-right="10px">
       <a class="navbar-brand" href="#">Climate Change Information Portal</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
         aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,25 +34,26 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item hujan-bulanan" href="#">Hujan Bulanan</a></li>
-              <li><a class="dropdown-item hujan-ekstrem" href="#">Curah Hujan Harian Ekstrem (lebat >100mm dan ekstrem > 150mm)</a></li>
+              <li><a class="dropdown-item hujan-ekstrem" href="#">Curah Hujan Harian Ekstrem (lebat >100mm dan ekstrem >
+                  150mm)</a></li>
               <li><a class="dropdown-item temperatur" href="#">Temperatur</a></li>
             </ul>
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">
-                <button type="button" class="btn btn-light">Tren Perubahan Iklim</button></a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">
-                <button type="button" class="btn btn-light">Proyeksi Iklim Masa Depan</button></a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link nav-kajian active" aria-current="page" href="#">
-                <button type="button" class="btn btn-light">Pengalaman Kajian Iklim</button></a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">
-                <button type="button" class="btn btn-light">Link Terkait</button></a>
-            </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">
+              <button type="button" class="btn btn-light">Tren Perubahan Iklim</button></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">
+              <button type="button" class="btn btn-light">Proyeksi Iklim Masa Depan</button></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-kajian active" aria-current="page" href="#">
+              <button type="button" class="btn btn-light">Pengalaman Kajian Iklim</button></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">
+              <button type="button" class="btn btn-light">Link Terkait</button></a>
+          </li>
           </li>
         </ul>
       </div>
@@ -59,20 +61,20 @@
   </nav>
 
   <div id="map"></div>
-    <div id="ch-ekstrem" class="controls" style="display: none;">
-      <h3>Curah Hujan Harian Ekstrem</h3>
-        <select id="pu-selector" onchange="gantiData(this.value)">
+  <div id="ch-ekstrem" class="controls" style="display: none;">
+    <h3>Curah Hujan Harian Ekstrem</h3>
+        <select id="pu-selector" onchange="gantiDataPU(this.value)">
             <option value="">-- Pilih Periode Ulang --</option>
             <option value="pU2-tahun">PU2 Tahun</option>
             <option value="pU10-tahun">PU10 Tahun</option>
             <option value="pU50-tahun">PU50 Tahun</option>
             <option value="pU100-tahun">PU100 Tahun</option>
           </select>
-    </div>
+  </div>
 
-    <div id="panel-hujan" class="controls" style="display: none;">
-      <h3>Data Hujan Klimatologi (mm)</h3>
-        <select id="bulan-selector" onchange="gantiData(this.value)">
+  <div id="panel-hujan" class="controls" style="display: none;">
+    <h3>Data Hujan Klimatologi (mm)</h3>
+        <select id="bulan-selector" onchange="gantiDataHujan(this.value)">
             <option value="">-- Pilih Bulan --</option>
             <option value="januari">Januari</option>
             <option value="februari">Februari</option>
@@ -86,13 +88,14 @@
             <option value="oktober">Oktober</option>
             <option value="november">November</option>
             <option value="desember">Desember</option>
-            <option value="jumlah-tahunan">Jumlah Tahunan</option>
-          </select>
-    </div>
+      <option value="jumlah-tahunan">Jumlah Tahunan</option>
+         
+    </select>
+  </div>
 
-    <div id="panel-temp" class="controls" style="display: none;">
-      <h3>Data Temperatur (°C)</h3>
-        <select id="bulan-temp" onchange="gantiData(this.value)">
+  <div id="panel-temp" class="controls" style="display: none;">
+    <h3>Data Temperatur (°C)</h3>
+        <select id="bulan-temp" onchange="gantiDataTemp(this.value)">
             <option value="">-- Pilih Bulan --</option>
             <option value="januari">Januari</option>
             <option value="februari">Februari</option>
@@ -106,17 +109,18 @@
             <option value="oktober">Oktober</option>
             <option value="november">November</option>
             <option value="desember">Desember</option>
-            <option value="jumlah-tahunan">Rata-rata Tahunan</option>
-          </select>
-    </div>
+      <option value="jumlah-tahunan">Rata-rata Tahunan</option>
+         
+    </select>
+  </div>
 
-    <div class="legend" id="heatmap-legend" style="display:none;">
+  <div class="legend" id="heatmap-legend" style="display:none;">
         <h4>Curah Hujan (mm)</h4>
         <div style="display: flex;">
             <div class="labels" id="legend-labels"></div>
             <div class="gradient-bar"></div>
           </div>
-    </div>
+  </div>
   <script src="js/displaymap.js"></script>
 </body>
 

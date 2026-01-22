@@ -1,4 +1,6 @@
-//Data Lokasi
+// 1. Variabel Global agar bisa diakses fungsi onchange dan antar event
+let map;
+let heatLayer;
 const markersData = [
   { name: "Banda Aceh", lat: 5.5483, lng: 95.3238 },
   { name: "Medan", lat: 3.5952, lng: 98.6722 },
@@ -40,143 +42,112 @@ const markersData = [
   { name: "Sorong", lat: -0.8667, lng: 131.2500 }
 ];
 
-// Inisialisasi peta
+// 2. Inisialisasi Peta saat pertama kali load
 document.addEventListener('DOMContentLoaded', function () {
+  const indonesiaBounds = [[-11.5, 94.5], [6.5, 141.5]];
 
-  //peta batas Indonesia
-  const indonesiaBounds = [
-    [-11.5, 94.5],
-    [6.5, 141.5]
-  ];
-
-  const map = L.map('map', {
+  map = L.map('map', {
     maxBounds: indonesiaBounds,
     maxBoundsViscosity: 1.0,
     minZoom: 5,
-    maxZoom: 19
+    maxZoom: 12
   }).setView([-2.5, 118], 5);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
+  // Tambahkan marker kota
   markersData.forEach(data => {
-    L.marker([data.lat, data.lng])
-      .addTo(map)
-      .bindPopup(`<b>${data.name}</b>`);
+    L.marker([data.lat, data.lng]).addTo(map).bindPopup(`<b>${data.name}</b>`);
   });
 
-  // Heatmap code
-  var heatmapData = [];
-
-  // Fetch the JSON data
-  fetch('data/rata_rata_historis/hujan_klimatologi_januari_1991-2020.json')
-      .then(response => response.json())
-      .then(data => {
-          data.forEach(point => {
-              heatmapData.push([point.latitude, point.longitude, point.rainfall]); // Adjust according to your JSON structure
-          });
-
-          // Create the heatmap layer
-          var heat = L.heatLayer(heatmapData, { radius: 25 }).addTo(map);
-      })
-      .catch(error => console.error('Error fetching the data:', error));
- 
-  //bagian marker di add ke page pengalaman kajian iklim
-  const kajianLayer = L.layerGroup();
-
-  const navKajian = document.querySelector('.nav-kajian');
-
-  if (navKajian) {
-    navKajian.addEventListener('click', function(e) {
-      e.preventDefault(); // Mencegah halaman scroll ke atas
-
-      // Cek apakah layer sudah ada di peta?
-      if (map.hasLayer(kajianLayer)) {
-        map.removeLayer(kajianLayer); // Jika sudah ada, hapus (sembunyikan)
-      } else {
-        map.addLayer(kajianLayer);    // Jika belum ada, tampilkan
-      }
-    });
-  }
+  // Inisialisasi kontrol panel (Tampilkan/Sembunyikan panel)
+  setupUIControls();
 });
 
-//page hujan bulanan
-document.addEventListener('DOMContentLoaded', function () {
-  const panelHujan = document.getElementById('panel-hujan');
-  const navHujanBulanan = document.querySelector('.hujan-bulanan');
-  const semuaTombolLain = document.querySelectorAll('.nav-link button, .dropdown-item');
+function setupUIControls() {
+  const panels = {
+    'hujan-bulanan': 'panel-hujan',
+    'hujan-ekstrem': 'ch-ekstrem',
+    'temperatur': 'panel-temp'
+  };
 
-  if (navHujanBulanan) {
-    navHujanBulanan.addEventListener('click', function(e) {
-      e.preventDefault(); // Mencegah halaman scroll ke atas
-      // Tampilkan atau sembunyikan panel hujan
-      panelHujan.style.display = 'block';
-    });
-  }
-
-  semuaTombolLain.forEach(tombol => {
-    tombol.addEventListener('click', function () {
-      if (this !== navHujanBulanan) {
-        panelHujan.style.display = 'none';
-      } 
-    });
-  });  
-});
-
-//page periode ulang
-document.addEventListener('DOMContentLoaded', function () {
-  const chEkstrem = document.getElementById('ch-ekstrem');
-  const navCHEkstrem = document.querySelector('.hujan-ekstrem');
-  const semuaTombolLain = document.querySelectorAll('.nav-link button, .dropdown-item');
-
-  if (navCHEkstrem) {
-    navCHEkstrem.addEventListener('click', function(e) {
-      e.preventDefault(); // Mencegah halaman scroll ke atas
-      // Tampilkan atau sembunyikan panel hujan
-      chEkstrem.style.display = 'block';
-    });
-  }
-
-  semuaTombolLain.forEach(tombol => {
-    tombol.addEventListener('click', function () {
-      if (this !== navCHEkstrem) {
-        chEkstrem.style.display = 'none';
-      } 
-    });
-  });  
-});
-
-//page temperatur
-document.addEventListener('DOMContentLoaded', function () {
-  const temp = document.getElementById('panel-temp');
-  const navTemp = document.querySelector('.temperatur');
-  const semuaTombolLain = document.querySelectorAll('.nav-link button, .dropdown-item');
-
-  if (navTemp) {
-    navTemp.addEventListener('click', function(e) {
-      e.preventDefault(); // Mencegah halaman scroll ke atas
-      // Tampilkan atau sembunyikan panel hujan
-      temp.style.display = 'block';
-    });
-  }
-
-  semuaTombolLain.forEach(tombol => {
-    tombol.addEventListener('click', function () {
-      if (this !== navTemp) {
-        temp.style.display = 'none';
-      } 
-    });
-  });  
-});
-
-//tombol aktif nonakttif
-document.addEventListener('DOMContentLoaded', function () {
-  const semuaTombol = document.querySelectorAll('.nav-link button, .dropdown-item');
-  semuaTombol.forEach(tombol => {
-    tombol.addEventListener('click', function () {
-      semuaTombol.forEach(btn => btn.classList.remove('active'));
-      this.classList.add('active');
-    });
+  Object.keys(panels).forEach(className => {
+    const trigger = document.querySelector(`.${className}`);
+    if (trigger) {
+      trigger.addEventListener('click', function (e) {
+        e.preventDefault();
+        // Sembunyikan semua panel
+        document.querySelectorAll('.controls').forEach(p => p.style.display = 'none');
+        // Tampilkan panel target
+        const targetPanel = document.getElementById(panels[className]);
+        if (targetPanel) targetPanel.style.display = 'block';
+      });
+    }
   });
-});
+}
+
+// 4. Fungsi yang dipanggil oleh atribut 'onchange' di HTML
+// Harus berada di scope global (window)
+
+window.gantiDataHujan = function (bulan) {
+  if (!bulan) return;
+  // Sesuaikan path dengan lokasi file JSON Anda
+  const path = `data/rata_rata_historis/hujan_klimatologi_${bulan}_1991-2020.json`;
+  updateHeatmap(path);
+}
+
+window.gantiDataPU = function (periode) {
+  if (!periode) return;
+  const path = `data/ekstrem/hujan_ekstrem_${periode}.json`;
+  updateHeatmap(path);
+}
+
+window.gantiDataTemp = function (bulan) {
+  if (!bulan) return;
+  const path = `data/temperatur/temp_${bulan}.json`;
+  updateHeatmap(path);
+}
+
+// 5. Fungsi Update Heatmap yang disesuaikan dengan data JSON Anda
+function updateHeatmap(url) {
+  if (heatLayer) {
+    map.removeLayer(heatLayer);
+  }
+
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error(`Gagal memuat file: ${url}`);
+      return response.json();
+    })
+    .then(data => {
+      // Mapping data JSON (lat, lon, value) ke format Leaflet Heat
+      const heatmapPoints = data.map(point => [
+        point.lat,   // Menggunakan properti 'lat' dari JSON
+        point.lon,   // Menggunakan properti 'lon' dari JSON
+        point.value  // Menggunakan properti 'value' dari JSON
+      ]);
+
+      heatLayer = L.heatLayer(heatmapPoints, {
+        radius: 15,    // Sesuaikan kerapatan titik
+        blur: 10,
+        maxZoom: 10,
+        max: 400,      // Sesuaikan dengan nilai curah hujan maksimum (misal 400mm)
+        gradient: {
+          0.2: 'blue',
+          0.4: 'cyan',
+          0.6: 'lime',
+          0.8: 'yellow',
+          1.0: 'red'
+        }
+      }).addTo(map);
+
+      // Tampilkan legenda jika berhasil load data
+      document.getElementById('heatmap-legend').style.display = 'block';
+    })
+    .catch(error => {
+      console.error('Error detail:', error);
+      alert("Data tidak ditemukan atau struktur file salah. Pastikan file ada di folder yang benar.");
+    });
+}
