@@ -1,6 +1,6 @@
-// 1. Variabel Global agar bisa diakses fungsi onchange dan antar event
+// Variabel Global agar bisa diakses fungsi onchange dan antar event
 let map;
-let heatLayer;
+let currentLayer;
 const markersData = [
   { name: "Banda Aceh", lat: 5.5483, lng: 95.3238 },
   { name: "Medan", lat: 3.5952, lng: 98.6722 },
@@ -42,7 +42,7 @@ const markersData = [
   { name: "Sorong", lat: -0.8667, lng: 131.2500 }
 ];
 
-// 2. Inisialisasi Peta saat pertama kali load
+// Inisialisasi Peta saat pertama kali load
 document.addEventListener('DOMContentLoaded', function () {
   const indonesiaBounds = [[-11.5, 94.5], [6.5, 141.5]];
 
@@ -50,7 +50,8 @@ document.addEventListener('DOMContentLoaded', function () {
     maxBounds: indonesiaBounds,
     maxBoundsViscosity: 1.0,
     minZoom: 5,
-    maxZoom: 12
+    maxZoom: 10,
+    preferCanvas: true
   }).setView([-2.5, 118], 5);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -66,6 +67,83 @@ document.addEventListener('DOMContentLoaded', function () {
   setupUIControls();
 });
 
+// 3. Fungsi Gradien Warna (0 = Putih, Max = Biru Tua)
+function getChoroplethColor(value) {
+  const maxRain = 500; // Standar nilai maksimum curah hujan untuk warna biru pekat
+  const ratio = Math.min(value / maxRain, 1);
+
+  // Interpolasi dari Putih (255, 255, 255) ke Biru Tua (0, 0, 139)
+  const r = Math.floor(255 - (255 * ratio));
+  const g = Math.floor(255 - (255 * ratio));
+  const b = Math.floor(255 - (116 * ratio));
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+// 4. Fungsi Utama Visualisasi Grid
+function updateGridLayer(url) {
+  // Hapus layer lama jika ada
+  if (currentLayer) {
+    map.removeLayer(currentLayer);
+  }
+
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error(`Gagal memuat file: ${url}`);
+      return response.json();
+    })
+    .then(data => {
+      currentLayer = L.featureGroup();
+
+      data.forEach(point => {
+        const val = point.value;
+        if (val > 0) {
+          // Membuat grid kotak ukuran 0.1 derajat (sesuai resolusi data umum)
+          const bounds = [
+            [point.lat - 0.05, point.lon - 0.05],
+            [point.lat + 0.05, point.lon + 0.05]
+          ];
+
+          L.rectangle(bounds, {
+            color: "transparent",    // Tanpa garis pinggir
+            fillColor: getChoroplethColor(val),
+            fillOpacity: 0.85,
+            interactive: true
+          })
+            .bindPopup(`Curah Hujan: ${val.toFixed(1)} mm`)
+            .addTo(currentLayer);
+        }
+      });
+
+      currentLayer.addTo(map);
+      document.getElementById('heatmap-legend').style.display = 'block';
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert("Data tidak tersedia.");
+    });
+}
+
+// 5. Integrasi dengan Event OnChange
+window.gantiDataHujan = function (bulan) {
+  if (!bulan) return;
+  const path = `data/rata_rata_historis/hujan_klimatologi_${bulan}_1991-2020.json`;
+  updateGridLayer(path);
+}
+
+window.gantiDataPU = function (periode) {
+  if (!periode) return;
+  const path = `data/ekstrem/hujan_ekstrem_${periode}.json`;
+  updateGridLayer(path);
+}
+
+window.gantiDataTemp = function (bulan) {
+  if (!bulan) return;
+  const path = `data/temperatur/temp_${bulan}.json`;
+  updateGridLayer(path);
+}
+
+// 6. Fungsi UI tetap sama
 function setupUIControls() {
   const panels = {
     'hujan-bulanan': 'panel-hujan',
@@ -78,76 +156,10 @@ function setupUIControls() {
     if (trigger) {
       trigger.addEventListener('click', function (e) {
         e.preventDefault();
-        // Sembunyikan semua panel
         document.querySelectorAll('.controls').forEach(p => p.style.display = 'none');
-        // Tampilkan panel target
         const targetPanel = document.getElementById(panels[className]);
         if (targetPanel) targetPanel.style.display = 'block';
       });
     }
   });
-}
-
-// 4. Fungsi yang dipanggil oleh atribut 'onchange' di HTML
-// Harus berada di scope global (window)
-
-window.gantiDataHujan = function (bulan) {
-  if (!bulan) return;
-  // Sesuaikan path dengan lokasi file JSON Anda
-  const path = `data/rata_rata_historis/hujan_klimatologi_${bulan}_1991-2020.json`;
-  updateHeatmap(path);
-}
-
-window.gantiDataPU = function (periode) {
-  if (!periode) return;
-  const path = `data/ekstrem/hujan_ekstrem_${periode}.json`;
-  updateHeatmap(path);
-}
-
-window.gantiDataTemp = function (bulan) {
-  if (!bulan) return;
-  const path = `data/temperatur/temp_${bulan}.json`;
-  updateHeatmap(path);
-}
-
-// 5. Fungsi Update Heatmap yang disesuaikan dengan data JSON Anda
-function updateHeatmap(url) {
-  if (heatLayer) {
-    map.removeLayer(heatLayer);
-  }
-
-  fetch(url)
-    .then(response => {
-      if (!response.ok) throw new Error(`Gagal memuat file: ${url}`);
-      return response.json();
-    })
-    .then(data => {
-      // Mapping data JSON (lat, lon, value) ke format Leaflet Heat
-      const heatmapPoints = data.map(point => [
-        point.lat,   // Menggunakan properti 'lat' dari JSON
-        point.lon,   // Menggunakan properti 'lon' dari JSON
-        point.value  // Menggunakan properti 'value' dari JSON
-      ]);
-
-      heatLayer = L.heatLayer(heatmapPoints, {
-        radius: 15,    // Sesuaikan kerapatan titik
-        blur: 10,
-        maxZoom: 10,
-        max: 400,      // Sesuaikan dengan nilai curah hujan maksimum (misal 400mm)
-        gradient: {
-          0.2: 'blue',
-          0.4: 'cyan',
-          0.6: 'lime',
-          0.8: 'yellow',
-          1.0: 'red'
-        }
-      }).addTo(map);
-
-      // Tampilkan legenda jika berhasil load data
-      document.getElementById('heatmap-legend').style.display = 'block';
-    })
-    .catch(error => {
-      console.error('Error detail:', error);
-      alert("Data tidak ditemukan atau struktur file salah. Pastikan file ada di folder yang benar.");
-    });
 }

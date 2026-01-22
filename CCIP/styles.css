@@ -1,75 +1,74 @@
   body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-    }
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+  }
 
-    #map {
-      height: 100vh;
-      width: 100%;
-      z-index: 1;
-    }
+  #map {
+    height: 100vh;
+    width: 100%;
+    z-index: 1;
+  }
 
-    .controls {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      z-index: 1000;
-      min-width: 200px;
-    }
+  .controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    min-width: 200px;
+  }
 
-    .controls h3 {
-      margin: 0 0 10px 0;
-      font-size: 1.1em;
-    }
+  .controls h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+  }
 
-    /* --- STYLE UNTUK LEGENDA (Keterangan Warna) --- */
-    .legend {
-      line-height: 18px;
-      color: #555;
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      background: white;
-      padding: 10px;
-      border-radius: 5px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      z-index: 1000;
-    }
+  /* --- STYLE UNTUK LEGENDA (Keterangan Warna) --- */
+  .legend {
+    line-height: 18px;
+    color: #555;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+  }
 
-    .legend .gradient-bar {
-      width: 30px;
-      height: 200px;
-      /* Order: bottom (0%) to top (100%) */
-      background: linear-gradient(to bottom,
-          white 0%,
-          lightblue 10%,
-          lime 30%,
-          yellow 50%,
-          orange 70%,
-          red 90%,
-          darkred 100%);
-      margin: 0 auto 5px;
-      border: 1px solid #ccc;
-    }
+  /* --- STYLE UNTUK LEGENDA (Keterangan Warna Biru) --- */
+  .legend .gradient-bar {
+    width: 30px;
+    height: 200px;
+    /* Dari Putih (bawah) ke Biru Tua (atas) */
+    background: linear-gradient(to top,
+        #ffffff 0%,
+        #d1eefb 20%,
+        #a6dcf7 40%,
+        #46a9e2 60%,
+        #005eb8 80%,
+        #00008b 100%);
+    margin: 0 auto 5px;
+    border: 1px solid #ccc;
+  }
 
-    .legend .labels {
-      font-size: 0.9em;
-      display: flex;
-      flex-direction: column-reverse;
-      height: 200px;
-      justify-content: space-between;
-    }
+  .legend .labels {
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: column-reverse;
+    height: 200px;
+    justify-content: space-between;
+  }
 
-    .legend .label-item {
-      text-align: right;
-    }
+  .legend .label-item {
+    text-align: right;
+  }
 
-    .navbar-brand {
-      margin-left: 5px;
-    }
-
+  .navbar-brand {
+    margin-left: 5px;
+  }
