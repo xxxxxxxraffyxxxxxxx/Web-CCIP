@@ -58,6 +58,32 @@ document.addEventListener('DOMContentLoaded', function () {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
+// LAYER BATAS INDONESIA (GeoJSON)
+let indonesiaLayer;
+
+fetch("data/shapefile/indonesia.geojson")
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("File indonesia.geojson tidak ditemukan");
+    }
+    return response.json();
+  })
+  .then(geojson => {
+    indonesiaLayer = L.geoJSON(geojson, {
+      style: {
+        color: "#555555",
+        weight: 1,
+        fillOpacity: 0
+    }
+
+    }).addTo(map);
+
+    indonesiaLayer.bringToFront();
+  })
+  .catch(error => {
+    console.error("Gagal load indonesia.geojson:", error);
+  });
+
   // Tambahkan marker kota
   markersData.forEach(data => {
     L.marker([data.lat, data.lng]).addTo(map).bindPopup(`<b>${data.name}</b>`);
