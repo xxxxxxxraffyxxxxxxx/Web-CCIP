@@ -54,6 +54,15 @@ document.addEventListener('DOMContentLoaded', function () {
     preferCanvas: true
   }).setView([-2.5, 118], 5);
 
+  // ===============================
+// PANE (URUTAN LAYER SEPERTI WINDY)
+// ===============================
+map.createPane("paneGrid");        // untuk data hujan / temperatur
+map.createPane("paneIndonesia");   // untuk garis pantai
+
+map.getPane("paneGrid").style.zIndex = 400;
+map.getPane("paneIndonesia").style.zIndex = 650;
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
@@ -70,24 +79,27 @@ fetch("data/shapefile/indonesia.geojson")
   })
   .then(geojson => {
     indonesiaLayer = L.geoJSON(geojson, {
+      pane: "paneIndonesia", // 🔥 KUNCI UTAMA
       style: {
-        color: "#555555",
-        weight: 1,
+        color: "#666",
+        weight: 1.4,
         fillOpacity: 0
-    }
-
+      }
     }).addTo(map);
-
-    indonesiaLayer.bringToFront();
   })
+  
   .catch(error => {
     console.error("Gagal load indonesia.geojson:", error);
   });
 
   // Tambahkan marker kota
   markersData.forEach(data => {
-    L.marker([data.lat, data.lng]).addTo(map).bindPopup(`<b>${data.name}</b>`);
-  });
+  L.marker([data.lat, data.lng], {
+    pane: "paneIndonesia"
+  })
+    .addTo(map)
+    .bindPopup(`<b>${data.name}</b>`);
+});
 
   // Inisialisasi kontrol panel (Tampilkan/Sembunyikan panel)
   setupUIControls();
@@ -131,13 +143,14 @@ function updateGridLayer(url) {
           ];
 
           L.rectangle(bounds, {
-            color: "transparent",    // Tanpa garis pinggir
+            pane: "paneGrid",      // 🔥 GRID DI BAWAH GARIS PANTAI
+            color: "transparent",
             fillColor: getChoroplethColor(val),
             fillOpacity: 0.85,
             interactive: true
           })
-            .bindPopup(`Curah Hujan: ${val.toFixed(1)} mm`)
-            .addTo(currentLayer);
+          .bindPopup(`Curah Hujan: ${val.toFixed(1)} mm`)
+          .addTo(currentLayer);
         }
       });
 
