@@ -1,6 +1,7 @@
-// Variabel Global agar bisa diakses fungsi onchange dan antar event
 let map;
 let currentLayer;
+let gridData = []; // Menyimpan data grid aktif
+let gridType = 'rain'; // 'rain' atau 'temperature'
 const markersData = [
   { name: "Banda Aceh", lat: 5.5483, lng: 95.3238 },
   { name: "Medan", lat: 3.5952, lng: 98.6722 },
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .then(geojson => {
       indonesiaLayer = L.geoJSON(geojson, {
-        pane: "paneIndonesia", // 🔥 KUNCI UTAMA
+        pane: "paneIndonesia",
         style: {
           color: "#666",
           weight: 1.4,
@@ -104,9 +105,49 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Inisialisasi kontrol panel (Tampilkan/Sembunyikan panel)
   setupUIControls();
+
+  // Feature: Popup saat klik di area manapun di peta
+  map.on('click', function (e) {
+    if (!gridData || gridData.length === 0) return;
+
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+
+    // Cari titik data terdekat (dalam radius grid 0.05 derajat)
+    const point = gridData.find(p =>
+      Math.abs(p.lat - lat) <= 0.05 && Math.abs(p.lon - lon) <= 0.05
+    );
+
+    let content = `<div style="font-family: sans-serif; min-width: 150px;">
+      <h6 style="margin: 0 0 8px 0; border-bottom: 1px solid #ccc; padding-bottom: 4px;">Informasi Lokasi</h6>
+      <table style="width: 100%; font-size: 13px;">
+        <tr><td><b>Lat:</b></td><td>${lat.toFixed(4)}</td></tr>
+        <tr><td><b>Lon:</b></td><td>${lon.toFixed(4)}</td></tr>
+    `;
+
+    if (point) {
+      const val = point.value;
+      const unit = gridType === 'temperature' ? '°C' : 'mm';
+      const label = gridType === 'temperature' ? 'Temperatur' : 'Curah Hujan';
+      content += `
+        <tr><td><b>${label}:</b></td><td>${val.toFixed(2)} ${unit}</td></tr>
+      `;
+    } else {
+      content += `
+        <tr><td colspan="2"><i style="color: #666;">Data tidak tersedia</i></td></tr>
+      `;
+    }
+
+    content += `</table></div>`;
+
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent(content)
+      .openOn(map);
+  });
 });
 
-// 3. Fungsi Gradien Warna (0 = Putih, Max = Biru Tua/Merah)
+// 3. Fungsi Gradien Warna (0 = Putih, Max = Biru Tua)
 function getChoroplethColor(value, maxVal = 500) {
   const ratio = Math.min(value / maxVal, 1);
 
@@ -146,12 +187,14 @@ function updateLegend(type) {
   }
 }
 
-// 5. Fungsi Utama Visualisasi Grid
 function updateGridLayer(url) {
   // Hapus layer lama jika ada
   if (currentLayer) {
     map.removeLayer(currentLayer);
   }
+
+  // Tampilkan loading (opsional, tapi bagus untuk file besar)
+  console.log("Loading data from:", url);
 
   fetch(url)
     .then(response => {
@@ -159,32 +202,30 @@ function updateGridLayer(url) {
       return response.json();
     })
     .then(data => {
+      // Simpan data ke variabel global untuk keperluan popup klik
+      gridData = data;
+      gridType = url.includes('temp') || url.includes('temperatur') ? 'temperature' : 'rain';
+
       currentLayer = L.featureGroup();
 
-      let maxVal = 500;
-      let type = 'rain';
-      if (url.includes('temp')) {
-        maxVal = 35;
-        type = 'temperature';
-      }
+      let maxVal = gridType === 'temperature' ? 35 : 500;
 
       data.forEach(point => {
         const val = point.value;
         if (val > 0) {
-          // Membuat grid kotak ukuran 0.1 derajat (sesuai resolusi data umum)
+          // Membuat grid kotak ukuran 0.1 derajat
           const bounds = [
             [point.lat - 0.05, point.lon - 0.05],
             [point.lat + 0.05, point.lon + 0.05]
           ];
 
           L.rectangle(bounds, {
-            pane: "paneGrid",      // 🔥 GRID DI BAWAH GARIS PANTAI
+            pane: "paneGrid",
             color: "transparent",
             fillColor: getChoroplethColor(val, maxVal),
             fillOpacity: 0.85,
-            interactive: true
+            interactive: false // Matikan interaksi pada individu kotak agar ditangani oleh map click
           })
-            .bindPopup(`${type === 'temperature' ? 'Temperatur' : 'Curah Hujan'}: ${val.toFixed(1)} ${type === 'temperature' ? '°C' : 'mm'}`)
             .addTo(currentLayer);
         }
       });
@@ -192,13 +233,13 @@ function updateGridLayer(url) {
       currentLayer.addTo(map);
 
       // Update Legend
-      updateLegend(type);
+      updateLegend(gridType);
 
       document.getElementById('heatmap-legend').style.display = 'block';
     })
     .catch(error => {
       console.error('Error:', error);
-      alert("Data tidak tersedia.");
+      alert("Data tidak tersedia atau gagal dimuat.");
     });
 }
 
