@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -112,6 +113,12 @@
       <option value="jumlah-tahunan">Rata-rata Tahunan</option>
          
     </select>
+  </div>
+
+  <div id="chart-container" style="display: none;">
+    <button id="close-chart" class="btn-close" aria-label="Close"
+      style="position: absolute; right: 10px; top: 10px;"></button>
+    <canvas id="rainfallChart"></canvas>
   </div>
 
   <div class="legend" id="heatmap-legend" style="display:none;">

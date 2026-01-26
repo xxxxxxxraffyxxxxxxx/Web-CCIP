@@ -94,13 +94,97 @@ document.addEventListener('DOMContentLoaded', function () {
       console.error("Gagal load indonesia.geojson:", error);
     });
 
+  // Load Data Curah Hujan Kota
+  let cityRainfallData = null;
+  fetch('data/city_rainfall_data.json')
+    .then(res => res.json())
+    .then(data => {
+      cityRainfallData = data;
+    })
+    .catch(e => console.error("Gagal memuat data curah hujan kota:", e));
+
+  // Variable untuk menyimpan instance chart agar bisa di-destroy sebelum buat baru
+  let rainfallChartInstance = null;
+
   // Tambahkan marker kota
   markersData.forEach(data => {
-    L.marker([data.lat, data.lng], {
+    const marker = L.marker([data.lat, data.lng], {
       pane: "paneIndonesia"
     })
       .addTo(map)
-      .bindPopup(`<b>${data.name}</b>`);
+      .bindPopup(`<b>${data.name}</b>`); // Tetap ada popup nama kota
+
+    // Event Klik Marker untuk Chart
+    marker.on('click', function () {
+      if (!cityRainfallData || !cityRainfallData[data.name]) {
+        console.warn(`Data curah hujan untuk ${data.name} tidak ditemukan.`);
+        return;
+      }
+
+      const monthlyData = cityRainfallData[data.name];
+      showRainfallChart(data.name, monthlyData);
+    });
+  });
+
+  // Fungsi Menampilkan Chart
+  function showRainfallChart(cityName, dataValues) {
+    const container = document.getElementById('chart-container');
+    container.style.display = 'block';
+
+    const ctx = document.getElementById('rainfallChart').getContext('2d');
+
+    if (rainfallChartInstance) {
+      rainfallChartInstance.destroy();
+    }
+
+    rainfallChartInstance = new Chart(ctx, {
+      type: 'bar', // Bisa 'line' atau 'bar' sesuai preferensi
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+        datasets: [{
+          label: `Curah Hujan Klimatologi (1991-2020) - ${cityName}`,
+          data: dataValues,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }, {
+          type: 'line',
+          label: 'Trend',
+          data: dataValues,
+          borderColor: '#ff6384',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: `Grafik Bulanan Rata-rata 30 Tahun: ${cityName}`
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Curah Hujan (mm)'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Tombol Close Chart
+  document.getElementById('close-chart').addEventListener('click', function () {
+    document.getElementById('chart-container').style.display = 'none';
   });
 
   // Inisialisasi kontrol panel (Tampilkan/Sembunyikan panel)
@@ -108,6 +192,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Feature: Popup saat klik di area manapun di peta
   map.on('click', function (e) {
+    // Jika klik marker, event marker jalan duluan. 
+    // Tapi karena bubbling, map click juga bisa jalan. Leaflet biasanya handle ini.
+    // Kita cek target.
+
     if (!gridData || gridData.length === 0) return;
 
     const lat = e.latlng.lat;
