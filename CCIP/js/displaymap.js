@@ -55,60 +55,60 @@ document.addEventListener('DOMContentLoaded', function () {
   }).setView([-2.5, 118], 5);
 
   // ===============================
-// PANE (URUTAN LAYER SEPERTI WINDY)
-// ===============================
-map.createPane("paneGrid");        // untuk data hujan / temperatur
-map.createPane("paneIndonesia");   // untuk garis pantai
+  // PANE (URUTAN LAYER SEPERTI WINDY)
+  // ===============================
+  map.createPane("paneGrid");        // untuk data hujan / temperatur
+  map.createPane("paneIndonesia");   // untuk garis pantai
 
-map.getPane("paneGrid").style.zIndex = 400;
-map.getPane("paneIndonesia").style.zIndex = 650;
+  map.getPane("paneGrid").style.zIndex = 400;
+  map.getPane("paneIndonesia").style.zIndex = 650;
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-// LAYER BATAS INDONESIA (GeoJSON)
-let indonesiaLayer;
+  // LAYER BATAS INDONESIA (GeoJSON)
+  let indonesiaLayer;
 
-fetch("data/shapefile/indonesia.geojson")
-  .then(response => {
-    if (!response.ok) {
-      throw new Error("File indonesia.geojson tidak ditemukan");
-    }
-    return response.json();
-  })
-  .then(geojson => {
-    indonesiaLayer = L.geoJSON(geojson, {
-      pane: "paneIndonesia", // 🔥 KUNCI UTAMA
-      style: {
-        color: "#666",
-        weight: 1.4,
-        fillOpacity: 0
+  fetch("data/shapefile/indonesia.geojson")
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("File indonesia.geojson tidak ditemukan");
       }
-    }).addTo(map);
-  })
-  
-  .catch(error => {
-    console.error("Gagal load indonesia.geojson:", error);
-  });
+      return response.json();
+    })
+    .then(geojson => {
+      indonesiaLayer = L.geoJSON(geojson, {
+        pane: "paneIndonesia", // 🔥 KUNCI UTAMA
+        style: {
+          color: "#666",
+          weight: 1.4,
+          fillOpacity: 0
+        },
+        interactive: false
+      }).addTo(map);
+    })
+
+    .catch(error => {
+      console.error("Gagal load indonesia.geojson:", error);
+    });
 
   // Tambahkan marker kota
   markersData.forEach(data => {
-  L.marker([data.lat, data.lng], {
-    pane: "paneIndonesia"
-  })
-    .addTo(map)
-    .bindPopup(`<b>${data.name}</b>`);
-});
+    L.marker([data.lat, data.lng], {
+      pane: "paneIndonesia"
+    })
+      .addTo(map)
+      .bindPopup(`<b>${data.name}</b>`);
+  });
 
   // Inisialisasi kontrol panel (Tampilkan/Sembunyikan panel)
   setupUIControls();
 });
 
-// 3. Fungsi Gradien Warna (0 = Putih, Max = Biru Tua)
-function getChoroplethColor(value) {
-  const maxRain = 500; // Standar nilai maksimum curah hujan untuk warna biru pekat
-  const ratio = Math.min(value / maxRain, 1);
+// 3. Fungsi Gradien Warna (0 = Putih, Max = Biru Tua/Merah)
+function getChoroplethColor(value, maxVal = 500) {
+  const ratio = Math.min(value / maxVal, 1);
 
   // Interpolasi dari Putih (255, 255, 255) ke Biru Tua (0, 0, 139)
   const r = Math.floor(255 - (255 * ratio));
@@ -118,7 +118,35 @@ function getChoroplethColor(value) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-// 4. Fungsi Utama Visualisasi Grid
+// 4. Update Legend Labels
+function updateLegend(type) {
+  const legendLabels = document.getElementById('legend-labels');
+  const legendTitle = document.querySelector('#heatmap-legend h4');
+
+  legendLabels.innerHTML = '';
+
+  let steps = 5;
+  let maxVal = 500;
+  let unit = 'mm';
+
+  if (type === 'temperature') {
+    maxVal = 35;
+    unit = '°C';
+    legendTitle.innerText = `Temperatur (${unit})`;
+  } else {
+    legendTitle.innerText = `Curah Hujan (${unit})`;
+  }
+
+  for (let i = 0; i <= steps; i++) {
+    const val = (maxVal / steps) * i;
+    const label = document.createElement('div');
+    label.className = 'label-item';
+    label.innerText = i === steps ? `${val.toFixed(0)}+` : val.toFixed(0);
+    legendLabels.appendChild(label);
+  }
+}
+
+// 5. Fungsi Utama Visualisasi Grid
 function updateGridLayer(url) {
   // Hapus layer lama jika ada
   if (currentLayer) {
@@ -133,6 +161,13 @@ function updateGridLayer(url) {
     .then(data => {
       currentLayer = L.featureGroup();
 
+      let maxVal = 500;
+      let type = 'rain';
+      if (url.includes('temp')) {
+        maxVal = 35;
+        type = 'temperature';
+      }
+
       data.forEach(point => {
         const val = point.value;
         if (val > 0) {
@@ -145,16 +180,20 @@ function updateGridLayer(url) {
           L.rectangle(bounds, {
             pane: "paneGrid",      // 🔥 GRID DI BAWAH GARIS PANTAI
             color: "transparent",
-            fillColor: getChoroplethColor(val),
+            fillColor: getChoroplethColor(val, maxVal),
             fillOpacity: 0.85,
             interactive: true
           })
-          .bindPopup(`Curah Hujan: ${val.toFixed(1)} mm`)
-          .addTo(currentLayer);
+            .bindPopup(`${type === 'temperature' ? 'Temperatur' : 'Curah Hujan'}: ${val.toFixed(1)} ${type === 'temperature' ? '°C' : 'mm'}`)
+            .addTo(currentLayer);
         }
       });
 
       currentLayer.addTo(map);
+
+      // Update Legend
+      updateLegend(type);
+
       document.getElementById('heatmap-legend').style.display = 'block';
     })
     .catch(error => {
